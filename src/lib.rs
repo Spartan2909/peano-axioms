@@ -8,6 +8,7 @@ use core::marker::PhantomData;
 pub trait Reify<T> {
     const REIFIED: T;
 
+    #[inline(always)]
     fn reify(&self) -> T {
         Self::REIFIED
     }
