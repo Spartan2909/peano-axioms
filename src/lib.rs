@@ -14,8 +14,18 @@ pub trait Reify<T> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct Zero;
+
+impl Zero {
+    pub const fn next(self) -> Next<Zero> {
+        Next::VALUE
+    }
+
+    pub const fn prev(self) -> Prev<Zero> {
+        Prev::VALUE
+    }
+}
 
 impl fmt::Display for Zero {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -29,17 +39,39 @@ macro_rules! reify_zero {
             impl Reify<$ty> for Zero {
                 const REIFIED: $ty = 0;
             }
+
+            impl From<Zero> for $ty {
+                fn from(_: Zero) -> Self {
+                    0
+                }
+            }
         )*
     };
 }
 
 reify_zero![u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize];
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct Next<T>(PhantomData<T>);
 
 impl<T> Next<T> {
     pub const VALUE: Next<T> = Next(PhantomData);
+
+    pub const fn next(self) -> Next<Next<T>> {
+        Next::VALUE
+    }
+}
+
+impl Next<Zero> {
+    pub const fn prev(self) -> Zero {
+        Zero
+    }
+}
+
+impl<T> Next<Next<T>> {
+    pub const fn prev(self) -> Next<T> {
+        Next::VALUE
+    }
 }
 
 impl<T> fmt::Display for Next<T>
@@ -51,11 +83,27 @@ where
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct Prev<T>(PhantomData<T>);
 
 impl<T> Prev<T> {
     pub const VALUE: Prev<T> = Prev(PhantomData);
+
+    pub const fn prev(self) -> Prev<Prev<T>> {
+        Prev::VALUE
+    }
+}
+
+impl Prev<Zero> {
+    pub const fn next(self) -> Zero {
+        Zero
+    }
+}
+
+impl<T> Prev<Prev<T>> {
+    pub const fn next(self) -> Prev<T> {
+        Prev::VALUE
+    }
 }
 
 impl<T> fmt::Display for Prev<T>
@@ -75,6 +123,15 @@ macro_rules! reify_generic {
                 T: Reify<$ty>
             {
                 const REIFIED: $ty = T::REIFIED $op 1;
+            }
+
+            impl<T> From<$name<T>> for $ty
+            where
+                T: Reify<$ty>
+            {
+                fn from(_: $name<T>) -> $ty {
+                    <$name<T> as Reify<$ty>>::REIFIED
+                }
             }
         )*
     };
