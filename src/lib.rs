@@ -39,10 +39,7 @@ reify_zero![u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize];
 pub struct Next<T>(PhantomData<T>);
 
 impl<T> Next<T> {
-    #[inline(always)]
-    pub const fn new() -> Next<T> {
-        Next(PhantomData)
-    }
+    pub const VALUE: Next<T> = Next(PhantomData);
 }
 
 impl<T> fmt::Display for Next<T>
@@ -58,10 +55,7 @@ where
 pub struct Prev<T>(PhantomData<T>);
 
 impl<T> Prev<T> {
-    #[inline(always)]
-    pub const fn new() -> Prev<T> {
-        Prev(PhantomData)
-    }
+    pub const VALUE: Prev<T> = Prev(PhantomData);
 }
 
 impl<T> fmt::Display for Prev<T>
