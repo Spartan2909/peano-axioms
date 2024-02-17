@@ -7,10 +7,10 @@ use core::marker::PhantomData;
 
 pub trait Reify<T> {
     const REIFIED: T;
-}
 
-pub fn reify<T: Reify<U>, U>(_: T) -> U {
-    T::REIFIED
+    fn reify(&self) -> T {
+        Self::REIFIED
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
