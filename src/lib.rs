@@ -5,33 +5,34 @@
 use core::fmt;
 use core::marker::PhantomData;
 
-pub trait Reify {
-    type Reified;
-
-    fn reify() -> Self::Reified;
+pub trait Reify<T> {
+    const REIFIED: T;
 }
 
-pub fn reify<T: Reify>(_: T) -> <T as Reify>::Reified {
-    T::reify()
+pub fn reify<T: Reify<U>, U>(_: T) -> U {
+    T::REIFIED
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Zero;
-
-impl Reify for Zero {
-    type Reified = i32;
-
-    #[inline(always)]
-    fn reify() -> Self::Reified {
-        0
-    }
-}
 
 impl fmt::Display for Zero {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("0")
     }
 }
+
+macro_rules! reify_zero {
+    ($($ty:ty),* $(,)?) => {
+        $(
+            impl Reify<$ty> for Zero {
+                const REIFIED: $ty = 0;
+            }
+        )*
+    };
+}
+
+reify_zero![u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Next<T>(PhantomData<T>);
@@ -43,25 +44,12 @@ impl<T> Next<T> {
     }
 }
 
-impl<T> Reify for Next<T>
+impl<T> fmt::Display for Next<T>
 where
-    T: Reify<Reified = i32>,
-{
-    type Reified = i32;
-
-    #[inline(always)]
-    fn reify() -> Self::Reified {
-        <T as Reify>::reify() + 1
-    }
-}
-
-impl<T, U> fmt::Display for Next<T>
-where
-    Self: Reify<Reified = U>,
-    U: fmt::Display,
+    Self: Reify<u128>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", Self::reify())
+        write!(f, "{}", Self::REIFIED)
     }
 }
 
@@ -75,27 +63,31 @@ impl<T> Prev<T> {
     }
 }
 
-impl<T> Reify for Prev<T>
-where
-    T: Reify<Reified = i32>,
-{
-    type Reified = i32;
-
-    #[inline(always)]
-    fn reify() -> Self::Reified {
-        <T as Reify>::reify() - 1
-    }
-}
-
 impl<T> fmt::Display for Prev<T>
 where
-    Self: Reify,
-    <Self as Reify>::Reified: fmt::Display,
+    Self: Reify<i128>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", Self::reify())
+        write!(f, "{}", Self::REIFIED)
     }
 }
+
+macro_rules! reify_generic {
+    ($name:ident, $op:tt, $($ty:ty),* $(,)?) => {
+        $(
+            impl<T> Reify<$ty> for $name<T>
+            where
+                T: Reify<$ty>
+            {
+                const REIFIED: $ty = T::REIFIED $op 1;
+            }
+        )*
+    };
+}
+
+reify_generic![Next, +, u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize];
+
+reify_generic![Prev, -, i8, i16, i32, i64, i128, isize];
 
 trait IsNotNext {}
 
@@ -460,19 +452,11 @@ pub type Simplified<T> = <T as Simplify>::Result;
 
 pub trait Positive: NonNegative + NonZero {}
 
-impl<T> Positive for T
-where
-    T: NonNegative + NonZero,
-{
-}
+impl<T> Positive for T where T: NonNegative + NonZero {}
 
 pub trait Negative: NonPositive + NonZero {}
 
-impl<T> Negative for T
-where
-    T: NonPositive + NonZero,
-{
-}
+impl<T> Negative for T where T: NonPositive + NonZero {}
 
 pub trait NonNegative {}
 
