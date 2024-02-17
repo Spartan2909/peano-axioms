@@ -535,7 +535,7 @@ macro_rules! rpn {
     (@ (($val:ty) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) ($val                         $($stack)*)) };
 
     // Done
-    (@ ()                       ($val:tt                  )) => { $val };
+    (@ (                      ) ($val:tt                  )) => { $val };
 
     // Entry point
     ($($t:tt)+)                                              => { $crate::rpn!(@ ($(($t))+)  (                                       )) };
