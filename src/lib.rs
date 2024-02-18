@@ -512,6 +512,30 @@ where
     Default::default()
 }
 
+/// Type-level absolute value.
+pub trait Absolute {
+    /// The absolute value of `Self`.
+    type Result;
+}
+
+impl Absolute for Zero {
+    type Result = Zero;
+}
+
+impl<T> Absolute for Next<T>
+where
+    Self: Simplify + Positive,
+{
+    type Result = Simplified<Self>;
+}
+
+impl<T> Absolute for Prev<T>
+where
+    Self: Simplify + Negative,
+{
+    type Result = Simplified<Self>;
+}
+
 /// Simplification of redundancies in type-level numbers.
 pub trait Simplify {
     /// The simplification of `Self`.
