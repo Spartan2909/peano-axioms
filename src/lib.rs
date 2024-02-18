@@ -22,20 +22,6 @@ pub trait Sequence {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct Zero;
 
-impl Zero {
-    #[inline(always)]
-    #[must_use]
-    pub const fn next(self) -> Next<Zero> {
-        Next::VALUE
-    }
-
-    #[inline(always)]
-    #[must_use]
-    pub const fn prev(self) -> Prev<Zero> {
-        Prev::VALUE
-    }
-}
-
 impl Sequence for Zero {
     type Next = Next<Zero>;
 
@@ -73,28 +59,6 @@ pub struct Next<T>(PhantomData<T>);
 
 impl<T> Next<T> {
     pub const VALUE: Next<T> = Next(PhantomData);
-
-    #[inline(always)]
-    #[must_use]
-    pub const fn next(self) -> Next<Next<T>> {
-        Next::VALUE
-    }
-}
-
-impl Next<Zero> {
-    #[inline(always)]
-    #[must_use]
-    pub const fn prev(self) -> Zero {
-        Zero
-    }
-}
-
-impl<T> Next<Next<T>> {
-    #[inline(always)]
-    #[must_use]
-    pub const fn prev(self) -> Next<T> {
-        Next::VALUE
-    }
 }
 
 impl<T> Sequence for Next<T> {
@@ -118,28 +82,6 @@ pub struct Prev<T>(PhantomData<T>);
 
 impl<T> Prev<T> {
     pub const VALUE: Prev<T> = Prev(PhantomData);
-
-    #[inline(always)]
-    #[must_use]
-    pub const fn prev(self) -> Prev<Prev<T>> {
-        Prev::VALUE
-    }
-}
-
-impl Prev<Zero> {
-    #[inline(always)]
-    #[must_use]
-    pub const fn next(self) -> Zero {
-        Zero
-    }
-}
-
-impl<T> Prev<Prev<T>> {
-    #[inline(always)]
-    #[must_use]
-    pub const fn next(self) -> Prev<T> {
-        Prev::VALUE
-    }
 }
 
 impl<T> Sequence for Prev<T> {
