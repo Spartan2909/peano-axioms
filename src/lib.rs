@@ -23,10 +23,14 @@ pub trait Sequence {
 pub struct Zero;
 
 impl Zero {
+    #[inline(always)]
+    #[must_use]
     pub const fn next(self) -> Next<Zero> {
         Next::VALUE
     }
 
+    #[inline(always)]
+    #[must_use]
     pub const fn prev(self) -> Prev<Zero> {
         Prev::VALUE
     }
@@ -39,6 +43,7 @@ impl Sequence for Zero {
 }
 
 impl fmt::Display for Zero {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("0")
     }
@@ -52,6 +57,7 @@ macro_rules! reify_zero {
             }
 
             impl From<Zero> for $ty {
+                #[inline(always)]
                 fn from(_: Zero) -> Self {
                     0
                 }
@@ -68,18 +74,24 @@ pub struct Next<T>(PhantomData<T>);
 impl<T> Next<T> {
     pub const VALUE: Next<T> = Next(PhantomData);
 
+    #[inline(always)]
+    #[must_use]
     pub const fn next(self) -> Next<Next<T>> {
         Next::VALUE
     }
 }
 
 impl Next<Zero> {
+    #[inline(always)]
+    #[must_use]
     pub const fn prev(self) -> Zero {
         Zero
     }
 }
 
 impl<T> Next<Next<T>> {
+    #[inline(always)]
+    #[must_use]
     pub const fn prev(self) -> Next<T> {
         Next::VALUE
     }
@@ -95,6 +107,7 @@ impl<T> fmt::Display for Next<T>
 where
     Self: Reify<u128>,
 {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", Self::REIFIED)
     }
@@ -106,18 +119,24 @@ pub struct Prev<T>(PhantomData<T>);
 impl<T> Prev<T> {
     pub const VALUE: Prev<T> = Prev(PhantomData);
 
+    #[inline(always)]
+    #[must_use]
     pub const fn prev(self) -> Prev<Prev<T>> {
         Prev::VALUE
     }
 }
 
 impl Prev<Zero> {
+    #[inline(always)]
+    #[must_use]
     pub const fn next(self) -> Zero {
         Zero
     }
 }
 
 impl<T> Prev<Prev<T>> {
+    #[inline(always)]
+    #[must_use]
     pub const fn next(self) -> Prev<T> {
         Prev::VALUE
     }
@@ -133,6 +152,7 @@ impl<T> fmt::Display for Prev<T>
 where
     Self: Reify<i128>,
 {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", Self::REIFIED)
     }
@@ -152,6 +172,7 @@ macro_rules! reify_generic {
             where
                 T: Reify<$ty>
             {
+                #[inline(always)]
                 fn from(_: $name<T>) -> $ty {
                     <$name<T> as Reify<$ty>>::REIFIED
                 }
@@ -257,6 +278,7 @@ where
 pub type Sum<T, U> = <T as Add<U>>::Result;
 
 #[inline(always)]
+#[must_use]
 pub fn sum<T, U, V>(_: T, _: U) -> Sum<T, U>
 where
     T: Add<U>,
@@ -326,6 +348,7 @@ where
 pub type Product<T, U> = <T as Mul<U>>::Result;
 
 #[inline(always)]
+#[must_use]
 pub fn product<T, U, V>(_: T, _: U) -> Product<T, U>
 where
     T: Mul<U>,
@@ -390,6 +413,7 @@ where
 pub type Difference<T, U> = <T as Sub<U>>::Result;
 
 #[inline(always)]
+#[must_use]
 pub fn difference<T, U, V>(_: T, _: U) -> Difference<T, U>
 where
     T: Sub<U>,
@@ -417,6 +441,7 @@ impl<T: Neg> Neg for Prev<T> {
 pub type Negation<T> = <T as Neg>::Result;
 
 #[inline(always)]
+#[must_use]
 pub fn negation<T>(_: T) -> Negation<T>
 where
     T: Neg,
