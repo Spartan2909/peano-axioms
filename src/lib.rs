@@ -1,3 +1,5 @@
+//! Type-level numbers based on an extension of the Peano axioms.
+
 #![no_std]
 #![recursion_limit = "256"]
 #![cfg_attr(test, allow(unused_parens))]
@@ -5,20 +7,30 @@
 use core::fmt;
 use core::marker::PhantomData;
 
+/// Types which can be converted to a runtime value.
 pub trait Reify<T> {
+    /// The runtime representation of this type.
     const REIFIED: T;
 
+    /// A convience method for getting the runtime representation of this type.
+    ///
+    /// The default implementation should always be sufficient.
     #[inline(always)]
     fn reify(&self) -> T {
         Self::REIFIED
     }
 }
+
+/// Types which are part of a sequence.
 pub trait Sequence {
+    /// The next type in the sequence.
     type Next;
 
+    /// The previous type in the sequence.
     type Prev;
 }
 
+/// The number zero.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct Zero;
 
@@ -54,10 +66,16 @@ macro_rules! reify_zero {
 
 reify_zero![u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize];
 
+/// The successor to some number.
+///
+/// Many traits in this crate assume that `T` does not contain any instances of
+/// [`Prev`]. If this may be the case, it is recommended to use the [`Simplify`]
+/// trait to remove redundancies.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct Next<T>(PhantomData<T>);
 
 impl<T> Next<T> {
+    /// The value associated with this type.
     pub const VALUE: Next<T> = Next(PhantomData);
 }
 
@@ -77,10 +95,16 @@ where
     }
 }
 
+/// The predecessor to some number.
+///
+/// Many traits in this crate assume that `T` does not contain any instances of
+/// [`Next`]. If this may be the case, it is recommended to use the [`Simplify`]
+/// trait to remove redundancies.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct Prev<T>(PhantomData<T>);
 
 impl<T> Prev<T> {
+    /// The value associated with this type.
     pub const VALUE: Prev<T> = Prev(PhantomData);
 }
 
@@ -145,27 +169,39 @@ impl<T> IsNotZero for Next<T> {}
 
 impl<T> IsNotZero for Prev<T> {}
 
+/// The number 1.
 pub type One = Next<Zero>;
 
+/// The number 2.
 pub type Two = Next<One>;
 
+/// The number 3.
 pub type Three = Next<Two>;
 
+/// The number 4.
 pub type Four = Next<Three>;
 
+/// The number 5.
 pub type Five = Next<Four>;
 
+/// The number 6.
 pub type Six = Next<Five>;
 
+/// The number 7.
 pub type Seven = Next<Six>;
 
+/// The number 8.
 pub type Eight = Next<Seven>;
 
+/// The number 9.
 pub type Nine = Next<Eight>;
 
+/// The number 10.
 pub type Ten = Next<Nine>;
 
+/// Type-level addition.
 pub trait Add<T> {
+    /// The result of adding `Self` to `T`.
     type Result;
 }
 
@@ -217,8 +253,10 @@ where
     type Result = Prev<Prev<Sum<T, U>>>;
 }
 
+/// The sum of `T` and `U`.
 pub type Sum<T, U> = <T as Add<U>>::Result;
 
+/// A convience method for adding two types through their values.
 #[inline(always)]
 #[must_use]
 pub fn sum<T, U, V>(_: T, _: U) -> Sum<T, U>
@@ -229,7 +267,9 @@ where
     Default::default()
 }
 
+/// Type-level multiplication.
 pub trait Mul<T> {
+    /// The result of multiplying `Self` by `T`.
     type Result;
 }
 
@@ -287,8 +327,10 @@ where
     type Result = Sum<Difference<Difference<Product<T, U>, T>, U>, One>;
 }
 
+/// The product of `T` and `U`.
 pub type Product<T, U> = <T as Mul<U>>::Result;
 
+/// A convience method for multiplying two types through their values.
 #[inline(always)]
 #[must_use]
 pub fn product<T, U, V>(_: T, _: U) -> Product<T, U>
@@ -299,7 +341,9 @@ where
     Default::default()
 }
 
+/// Type-level subtraction.
 pub trait Sub<T> {
+    /// The result of subtracting `T` from `Self`.
     type Result;
 }
 
@@ -352,8 +396,13 @@ where
     type Result = Difference<T, U>;
 }
 
+/// The difference between `T` and `U`.
+///
+/// Note that this is not absolute difference. For the absolute difference
+/// between `T` and `U`, use [`Absolute<Difference<T, U>>`][Absolute].
 pub type Difference<T, U> = <T as Sub<U>>::Result;
 
+/// A convience method for subtracting two types through their values.
 #[inline(always)]
 #[must_use]
 pub fn difference<T, U, V>(_: T, _: U) -> Difference<T, U>
@@ -364,7 +413,9 @@ where
     Default::default()
 }
 
+/// Type-level negation.
 pub trait Neg {
+    /// The negation of `Self`.
     type Result;
 }
 
@@ -380,8 +431,10 @@ impl<T: Neg> Neg for Prev<T> {
     type Result = Next<Negation<T>>;
 }
 
+/// The negation of `Self`.
 pub type Negation<T> = <T as Neg>::Result;
 
+/// A convience method for negating a type through its value.
 #[inline(always)]
 #[must_use]
 pub fn negation<T>(_: T) -> Negation<T>
@@ -392,7 +445,9 @@ where
     Default::default()
 }
 
+/// Type-level division.
 pub trait Div<T> {
+    /// The result of dividing `Self` by `T`.
     type Result;
 }
 
@@ -442,9 +497,23 @@ where
     type Result = Quotient<Negation<Prev<T>>, Negation<Prev<U>>>;
 }
 
+/// The quotient of `T` and `U`.
 pub type Quotient<T, U> = <T as Div<U>>::Result;
 
+/// A convience method for dividing two types through their values.
+#[inline(always)]
+#[must_use]
+pub fn quotient<T, U, V>(_: T, _: U) -> Quotient<T, U>
+where
+    T: Div<U>,
+    Quotient<T, U>: Default,
+{
+    Default::default()
+}
+
+/// Simplification of redundancies in type-level numbers.
 pub trait Simplify {
+    /// The simplification of `Self`.
     type Result;
 }
 
@@ -490,16 +559,20 @@ where
     type Result = Simplified<T>;
 }
 
+/// The simplification of `T`.
 pub type Simplified<T> = <T as Simplify>::Result;
 
+/// Positive type-level numbers.
 pub trait Positive: NonNegative + NonZero {}
 
 impl<T> Positive for T where T: NonNegative + NonZero {}
 
+/// Negative type-level numbers.
 pub trait Negative: NonPositive + NonZero {}
 
 impl<T> Negative for T where T: NonPositive + NonZero {}
 
+/// Non-negative type-level numbers.
 pub trait NonNegative {}
 
 impl NonNegative for Zero {}
@@ -518,6 +591,7 @@ where
 {
 }
 
+/// Non-positive type-level numbers,
 pub trait NonPositive {}
 
 impl NonPositive for Zero {}
@@ -536,6 +610,7 @@ where
 {
 }
 
+/// Non-zero type-level numbers.
 pub trait NonZero {}
 
 impl<T> NonZero for Next<T>
@@ -552,6 +627,12 @@ where
 {
 }
 
+/// Reverse polish notation representation for type-level numerical expressions.
+/// 
+/// Numbers from 0-10 inclusive can be represented with numerals, but others
+/// must be represented with parenthesised types (e.g. `(Next<Next<Ten>>)`).
+///
+/// Negation is not supported. Subtract the number from 0 instead.
 #[macro_export]
 macro_rules! rpn {
     // Numerals
