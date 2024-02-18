@@ -5,6 +5,7 @@
 #![cfg_attr(test, allow(unused_parens))]
 
 use core::fmt;
+use core::hash;
 use core::marker::PhantomData;
 
 /// Types which can be converted to a runtime value.
@@ -31,7 +32,7 @@ pub trait Sequence {
 }
 
 /// The number zero.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Zero;
 
 impl Sequence for Zero {
@@ -66,11 +67,18 @@ macro_rules! reify_zero {
 
 reify_zero![u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize];
 
+impl hash::Hash for Zero {
+    #[inline]
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        state.write_i128(0);
+    }
+}
+
 /// The successor to some number.
 ///
 /// Some of the traits in this crate require that `Next<T>` is positive. If this
 /// causes errors, the [`Simplify`] trait can be used to remove redundancies.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Next<T>(PhantomData<T>);
 
 impl<T> Next<T> {
@@ -94,11 +102,18 @@ where
     }
 }
 
+impl<T> hash::Hash for Next<T> where Self: Reify<i128> {
+    #[inline]
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        state.write_i128(Self::REIFIED);
+    }
+}
+
 /// The predecessor to some number.
 ///
 /// Some of the traits in this crate require that `Prev<T>` is negative. If this
 /// causes errors, the [`Simplify`] trait can be used to remove redundancies.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Prev<T>(PhantomData<T>);
 
 impl<T> Prev<T> {
@@ -119,6 +134,13 @@ where
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", Self::REIFIED)
+    }
+}
+
+impl<T> hash::Hash for Prev<T> where Self: Reify<i128> {
+    #[inline]
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        state.write_i128(Self::REIFIED);
     }
 }
 
