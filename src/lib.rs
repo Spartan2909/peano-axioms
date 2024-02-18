@@ -102,7 +102,10 @@ where
     }
 }
 
-impl<T> hash::Hash for Next<T> where Self: Reify<i128> {
+impl<T> hash::Hash for Next<T>
+where
+    Self: Reify<i128>,
+{
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         state.write_i128(Self::REIFIED);
@@ -137,7 +140,10 @@ where
     }
 }
 
-impl<T> hash::Hash for Prev<T> where Self: Reify<i128> {
+impl<T> hash::Hash for Prev<T>
+where
+    Self: Reify<i128>,
+{
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         state.write_i128(Self::REIFIED);
@@ -636,7 +642,7 @@ where
 {
 }
 
-/// Non-positive type-level numbers,
+/// Non-positive type-level numbers.
 pub trait NonPositive {}
 
 impl NonPositive for Zero {}
@@ -673,7 +679,7 @@ where
 }
 
 /// Reverse polish notation representation for type-level numerical expressions.
-/// 
+///
 /// Numbers from 0-10 inclusive can be represented with numerals, but others
 /// must be represented with parenthesised types (e.g. `(Next<Next<Ten>>)`).
 ///
