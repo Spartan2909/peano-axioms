@@ -68,9 +68,8 @@ reify_zero![u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize];
 
 /// The successor to some number.
 ///
-/// Many traits in this crate require that `T` does not contain any instances of
-/// [`Prev`]. If this causes errors, the [`Simplify`] trait can be used to
-/// remove redundancies.
+/// Some of the traits in this crate require that `Next<T>` is positive. If this
+/// causes errors, the [`Simplify`] trait can be used to remove redundancies.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct Next<T>(PhantomData<T>);
 
@@ -97,9 +96,8 @@ where
 
 /// The predecessor to some number.
 ///
-/// Many traits in this crate require that `T` does not contain any instances of
-/// [`Next`]. If this causes errors, the [`Simplify`] trait can be used to
-/// remove redundancies.
+/// Some of the traits in this crate require that `Prev<T>` is negative. If this
+/// causes errors, the [`Simplify`] trait can be used to remove redundancies.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct Prev<T>(PhantomData<T>);
 
