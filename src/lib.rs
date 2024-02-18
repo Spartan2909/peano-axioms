@@ -13,6 +13,11 @@ pub trait Reify<T> {
         Self::REIFIED
     }
 }
+pub trait Sequence {
+    type Next;
+
+    type Prev;
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub struct Zero;
@@ -25,6 +30,12 @@ impl Zero {
     pub const fn prev(self) -> Prev<Zero> {
         Prev::VALUE
     }
+}
+
+impl Sequence for Zero {
+    type Next = Next<Zero>;
+
+    type Prev = Prev<Zero>;
 }
 
 impl fmt::Display for Zero {
@@ -74,6 +85,12 @@ impl<T> Next<Next<T>> {
     }
 }
 
+impl<T> Sequence for Next<T> {
+    type Next = Next<Next<T>>;
+
+    type Prev = T;
+}
+
 impl<T> fmt::Display for Next<T>
 where
     Self: Reify<u128>,
@@ -104,6 +121,12 @@ impl<T> Prev<Prev<T>> {
     pub const fn next(self) -> Prev<T> {
         Prev::VALUE
     }
+}
+
+impl<T> Sequence for Prev<T> {
+    type Next = T;
+
+    type Prev = Prev<Prev<T>>;
 }
 
 impl<T> fmt::Display for Prev<T>
