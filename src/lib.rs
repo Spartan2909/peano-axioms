@@ -816,8 +816,9 @@ where
 impl<T> Absolute for Prev<T>
 where
     Self: Simplify + Negative,
+    Simplified<Self>: Neg,
 {
-    type Result = Simplified<Self>;
+    type Result = Negation<Simplified<Self>>;
 }
 
 /// Simplification of redundancies in type-level numbers.
