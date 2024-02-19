@@ -8,6 +8,10 @@ mod div;
 pub use div::Quotient;
 pub use div::Remainder;
 
+mod gcd;
+pub use gcd::Gcd;
+pub use gcd::GreatestCommonDivisor;
+
 use core::fmt;
 use core::hash;
 use core::marker::PhantomData;

@@ -57,6 +57,12 @@ fn div() {
 }
 
 #[test]
+fn gcd() {
+    assert_eq!(reify_i32(GreatestCommonDivisor::<Six, Three>::VALUE), 3);
+    assert_eq!(reify_i32(GreatestCommonDivisor::<Ten, Three>::VALUE), 1);
+}
+
+#[test]
 fn rpn() {
     assert_eq!(reify_i32(<rpn!(3 4 5 + *)>::VALUE), 27);
 }
