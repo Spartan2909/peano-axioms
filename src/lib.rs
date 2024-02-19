@@ -583,29 +583,32 @@ impl<T: Neg> Neg for Prev<T> {
 pub type Negation<T> = <T as Neg>::Output;
 
 /// Type-level absolute value.
-pub trait Absolute {
+pub trait Abs {
     /// The absolute value of `Self`.
     type Result;
 }
 
-impl Absolute for Zero {
+impl Abs for Zero {
     type Result = Zero;
 }
 
-impl<T> Absolute for Next<T>
+impl<T> Abs for Next<T>
 where
     Self: Simplify + Positive,
 {
     type Result = Simplified<Self>;
 }
 
-impl<T> Absolute for Prev<T>
+impl<T> Abs for Prev<T>
 where
     Self: Simplify + Negative,
     Simplified<Self>: Neg,
 {
     type Result = Negation<Simplified<Self>>;
 }
+
+/// The absolute value of `T`.
+pub type Absolute<T> = <T as Abs>::Result;
 
 /// Simplification of redundancies in type-level numbers.
 pub trait Simplify {
