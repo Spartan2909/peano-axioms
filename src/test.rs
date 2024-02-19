@@ -54,6 +54,8 @@ fn div() {
     assert_eq!(reify_i32(Remainder::<Four, Three>::VALUE), 1);
     assert_eq!(reify_i32(Quotient::<Next<Ten>, Four>::VALUE), 2);
     assert_eq!(reify_i32(Remainder::<Next<Ten>, Four>::VALUE), 3);
+    assert_eq!(reify_i32(Quotient::<Four, Four>::VALUE), 1);
+    assert_eq!(reify_i32(Remainder::<Four, Four>::VALUE), 0);
 }
 
 #[test]
