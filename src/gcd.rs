@@ -9,6 +9,11 @@ pub trait Reduce<T> {
     type Arg;
 }
 
+impl Reduce<Zero> for Zero {
+    type This = Zero;
+    type Arg = Zero;
+}
+
 impl<T> Reduce<Zero> for Next<T> {
     type This = Self;
     type Arg = Zero;

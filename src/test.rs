@@ -60,6 +60,7 @@ fn div() {
 fn gcd() {
     assert_eq!(reify_i32(GreatestCommonDivisor::<Six, Three>::VALUE), 3);
     assert_eq!(reify_i32(GreatestCommonDivisor::<Ten, Three>::VALUE), 1);
+    assert_eq!(reify_i32(GreatestCommonDivisor::<Five, Five>::VALUE), 5);
 }
 
 #[test]
