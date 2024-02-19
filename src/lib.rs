@@ -35,6 +35,11 @@ pub trait Sequence {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Zero;
 
+impl Zero {
+    /// The value associated with this type, i.e. 0.
+    pub const VALUE: Zero = Zero;
+}
+
 impl Sequence for Zero {
     type Next = Next<Zero>;
 
