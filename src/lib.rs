@@ -7,6 +7,12 @@
 use core::fmt;
 use core::hash;
 use core::marker::PhantomData;
+use core::ops::Add;
+use core::ops::Div;
+use core::ops::Mul;
+use core::ops::Neg;
+use core::ops::Rem;
+use core::ops::Sub;
 
 /// Types which can be converted to a runtime value.
 pub trait Reify<T> {
@@ -230,106 +236,162 @@ pub type Nine = Next<Eight>;
 /// The number 10.
 pub type Ten = Next<Nine>;
 
-/// Type-level addition.
-pub trait Add<T> {
-    /// The result of adding `Self` to `T`.
-    type Result;
-}
-
 impl Add<Zero> for Zero {
-    type Result = Zero;
+    type Output = Zero;
+
+    #[inline(always)]
+    fn add(self, _: Zero) -> Self::Output {
+        Zero
+    }
 }
 
 impl<T> Add<Zero> for Next<T> {
-    type Result = Self;
+    type Output = Self;
+
+    #[inline(always)]
+    fn add(self, _: Zero) -> Self::Output {
+        Self::VALUE
+    }
 }
 
 impl<T> Add<Zero> for Prev<T> {
-    type Result = Self;
+    type Output = Self;
+
+    #[inline(always)]
+    fn add(self, _: Zero) -> Self::Output {
+        Self::VALUE
+    }
 }
 
 impl<T> Add<Next<T>> for Zero {
-    type Result = Next<T>;
+    type Output = Next<T>;
+
+    #[inline(always)]
+    fn add(self, _: Next<T>) -> Self::Output {
+        Self::Output::VALUE
+    }
 }
 
 impl<T> Add<Prev<T>> for Zero {
-    type Result = Prev<T>;
+    type Output = Prev<T>;
+
+    #[inline(always)]
+    fn add(self, _: Prev<T>) -> Self::Output {
+        Self::Output::VALUE
+    }
 }
 
 impl<T, U> Add<Next<U>> for Next<T>
 where
     T: Add<U>,
 {
-    type Result = Next<Next<Sum<T, U>>>;
+    type Output = Next<Next<Sum<T, U>>>;
+
+    #[inline(always)]
+    fn add(self, _: Next<U>) -> Self::Output {
+        Self::Output::VALUE
+    }
 }
 
 impl<T, U> Add<Prev<U>> for Next<T>
 where
     T: Add<U>,
+    Sum<T, U>: Default,
 {
-    type Result = Sum<T, U>;
+    type Output = Sum<T, U>;
+
+    #[inline(always)]
+    fn add(self, _: Prev<U>) -> Self::Output {
+        Self::Output::default()
+    }
 }
 
 impl<T, U> Add<Next<U>> for Prev<T>
 where
     T: Add<U>,
+    Sum<T, U>: Default,
 {
-    type Result = Sum<T, U>;
+    type Output = Sum<T, U>;
+
+    #[inline(always)]
+    fn add(self, _: Next<U>) -> Self::Output {
+        Self::Output::default()
+    }
 }
 
 impl<T, U> Add<Prev<U>> for Prev<T>
 where
     T: Add<U>,
     Sum<T, U>: Sub<Two>,
+    Difference<Sum<T, U>, Two>: Default,
 {
-    type Result = Difference<Sum<T, U>, Two>;
+    type Output = Difference<Sum<T, U>, Two>;
+
+    #[inline(always)]
+    fn add(self, _: Prev<U>) -> Self::Output {
+        Self::Output::default()
+    }
 }
 
 /// The sum of `T` and `U`.
-pub type Sum<T, U> = <T as Add<U>>::Result;
-
-/// A convience method for adding two types through their values.
-#[inline(always)]
-#[must_use]
-pub fn sum<T, U, V>(_: T, _: U) -> Sum<T, U>
-where
-    T: Add<U>,
-    Sum<T, U>: Default,
-{
-    Default::default()
-}
-
-/// Type-level multiplication.
-pub trait Mul<T> {
-    /// The result of multiplying `Self` by `T`.
-    type Result;
-}
+pub type Sum<T, U> = <T as Add<U>>::Output;
 
 impl Mul<Zero> for Zero {
-    type Result = Zero;
+    type Output = Zero;
+
+    #[inline(always)]
+    fn mul(self, _: Zero) -> Self::Output {
+        Zero
+    }
 }
 
 impl<T> Mul<Zero> for Next<T> {
-    type Result = Zero;
+    type Output = Zero;
+
+    #[inline(always)]
+    fn mul(self, _: Zero) -> Self::Output {
+        Zero
+    }
 }
 
 impl<T> Mul<Zero> for Prev<T> {
-    type Result = Zero;
+    type Output = Zero;
+
+    #[inline(always)]
+    fn mul(self, _: Zero) -> Self::Output {
+        Zero
+    }
 }
 
 impl<T> Mul<Next<T>> for Zero {
-    type Result = Zero;
+    type Output = Zero;
+
+    #[inline(always)]
+    fn mul(self, _: Next<T>) -> Self::Output {
+        Zero
+    }
 }
 
 impl<T> Mul<Prev<T>> for Zero {
-    type Result = Zero;
+    type Output = Zero;
+
+    #[inline(always)]
+    fn mul(self, _: Prev<T>) -> Self::Output {
+        Zero
+    }
 }
 
 impl<T, U> Mul<Next<U>> for Next<T>
 where
     Next<T>: Mul<U> + Add<Product<Next<T>, U>>,
+    Sum<Next<T>, Product<Next<T>, U>>: Default,
 {
-    type Result = Sum<Next<T>, Product<Next<T>, U>>;
+    type Output = Sum<Next<T>, Product<Next<T>, U>>;
+
+    #[inline(always)]
+    fn mul(self, _: Next<U>) -> Self::Output {
+        Self::Output::default()
+    }
 }
 
 impl<T, U> Mul<Prev<U>> for Next<T>
@@ -338,15 +400,27 @@ where
     Product<T, U>: Sub<T>,
     Difference<Product<T, U>, T>: Add<U>,
     Sum<Difference<Product<T, U>, T>, U>: Sub<One>,
+    Difference<Sum<Difference<Product<T, U>, T>, U>, One>: Default,
 {
-    type Result = Difference<Sum<Difference<Product<T, U>, T>, U>, One>;
+    type Output = Difference<Sum<Difference<Product<T, U>, T>, U>, One>;
+
+    #[inline(always)]
+    fn mul(self, _: Prev<U>) -> Self::Output {
+        Self::Output::default()
+    }
 }
 
 impl<T, U> Mul<Next<U>> for Prev<T>
 where
     Next<U>: Mul<Prev<T>>,
+    Product<Next<U>, Prev<T>>: Default,
 {
-    type Result = Product<Next<U>, Prev<T>>;
+    type Output = Product<Next<U>, Prev<T>>;
+
+    #[inline(always)]
+    fn mul(self, _: Next<U>) -> Self::Output {
+        Self::Output::default()
+    }
 }
 
 impl<T, U> Mul<Prev<U>> for Prev<T>
@@ -355,146 +429,164 @@ where
     Product<T, U>: Sub<T>,
     Difference<Product<T, U>, T>: Sub<U>,
     Difference<Difference<Product<T, U>, T>, U>: Add<One>,
+    Sum<Difference<Difference<Product<T, U>, T>, U>, One>: Default,
 {
-    type Result = Sum<Difference<Difference<Product<T, U>, T>, U>, One>;
+    type Output = Sum<Difference<Difference<Product<T, U>, T>, U>, One>;
+
+    #[inline(always)]
+    fn mul(self, _: Prev<U>) -> Self::Output {
+        Self::Output::default()
+    }
 }
 
 /// The product of `T` and `U`.
-pub type Product<T, U> = <T as Mul<U>>::Result;
-
-/// A convience method for multiplying two types through their values.
-#[inline(always)]
-#[must_use]
-pub fn product<T, U, V>(_: T, _: U) -> Product<T, U>
-where
-    T: Mul<U>,
-    Product<T, U>: Default,
-{
-    Default::default()
-}
-
-/// Type-level subtraction.
-pub trait Sub<T> {
-    /// The result of subtracting `T` from `Self`.
-    type Result;
-}
+pub type Product<T, U> = <T as Mul<U>>::Output;
 
 impl Sub<Zero> for Zero {
-    type Result = Zero;
+    type Output = Zero;
+
+    #[inline(always)]
+    fn sub(self, _: Zero) -> Self::Output {
+        Zero
+    }
 }
 
 impl<T: Neg> Sub<Next<T>> for Zero {
-    type Result = Prev<Negation<T>>;
+    type Output = Prev<Negation<T>>;
+
+    #[inline(always)]
+    fn sub(self, _: Next<T>) -> Self::Output {
+        Self::Output::VALUE
+    }
 }
 
 impl<T: Neg> Sub<Prev<T>> for Zero {
-    type Result = Next<Negation<T>>;
+    type Output = Next<Negation<T>>;
+
+    #[inline(always)]
+    fn sub(self, _: Prev<T>) -> Self::Output {
+        Self::Output::VALUE
+    }
 }
 
 impl<T> Sub<Zero> for Next<T> {
-    type Result = Self;
+    type Output = Self;
+
+    #[inline(always)]
+    fn sub(self, _: Zero) -> Self::Output {
+        Self::Output::VALUE
+    }
 }
 
 impl<T> Sub<Zero> for Prev<T> {
-    type Result = Self;
+    type Output = Self;
+
+    #[inline(always)]
+    fn sub(self, _: Zero) -> Self::Output {
+        Self::Output::VALUE
+    }
 }
 
 impl<T, U> Sub<Next<U>> for Next<T>
 where
     T: Sub<U>,
+    Difference<T, U>: Default,
 {
-    type Result = Difference<T, U>;
+    type Output = Difference<T, U>;
+
+    #[inline(always)]
+    fn sub(self, _: Next<U>) -> Self::Output {
+        Self::Output::default()
+    }
 }
 
 impl<T, U> Sub<Prev<U>> for Next<T>
 where
     Prev<U>: Neg,
     Next<T>: Add<Negation<Prev<U>>>,
+    Sum<Next<T>, Negation<Prev<U>>>: Default,
 {
-    type Result = Sum<Next<T>, Negation<Prev<U>>>;
+    type Output = Sum<Next<T>, Negation<Prev<U>>>;
+
+    #[inline(always)]
+    fn sub(self, _: Prev<U>) -> Self::Output {
+        Self::Output::default()
+    }
 }
 
 impl<T, U> Sub<Next<U>> for Prev<T>
 where
     Prev<Prev<T>>: Sub<U>,
+    Difference<Prev<Prev<T>>, U>: Default,
 {
-    type Result = Difference<Prev<Prev<T>>, U>;
+    type Output = Difference<Prev<Prev<T>>, U>;
+
+    #[inline(always)]
+    fn sub(self, _: Next<U>) -> Self::Output {
+        Self::Output::default()
+    }
 }
 
 impl<T, U> Sub<Prev<U>> for Prev<T>
 where
     T: Sub<U>,
+    Difference<T, U>: Default,
 {
-    type Result = Difference<T, U>;
+    type Output = Difference<T, U>;
+
+    #[inline(always)]
+    fn sub(self, _: Prev<U>) -> Self::Output {
+        Self::Output::default()
+    }
 }
 
 /// The difference between `T` and `U`.
 ///
 /// Note that this is not absolute difference. For the absolute difference
 /// between `T` and `U`, use [`Absolute<Difference<T, U>>`][Absolute].
-pub type Difference<T, U> = <T as Sub<U>>::Result;
-
-/// A convience method for subtracting two types through their values.
-#[inline(always)]
-#[must_use]
-pub fn difference<T, U, V>(_: T, _: U) -> Difference<T, U>
-where
-    T: Sub<U>,
-    Difference<T, U>: Default,
-{
-    Default::default()
-}
-
-/// Type-level negation.
-pub trait Neg {
-    /// The negation of `Self`.
-    type Result;
-}
+pub type Difference<T, U> = <T as Sub<U>>::Output;
 
 impl Neg for Zero {
-    type Result = Zero;
+    type Output = Zero;
+
+    #[inline(always)]
+    fn neg(self) -> Self::Output {
+        Zero
+    }
 }
 
 impl<T: Neg> Neg for Next<T> {
-    type Result = Prev<Negation<T>>;
+    type Output = Prev<Negation<T>>;
+
+    #[inline(always)]
+    fn neg(self) -> Self::Output {
+        Self::Output::VALUE
+    }
 }
 
 impl<T: Neg> Neg for Prev<T> {
-    type Result = Next<Negation<T>>;
+    type Output = Next<Negation<T>>;
+
+    #[inline(always)]
+    fn neg(self) -> Self::Output {
+        Self::Output::VALUE
+    }
 }
 
 /// The negation of `Self`.
-pub type Negation<T> = <T as Neg>::Result;
-
-/// A convience method for negating a type through its value.
-#[inline(always)]
-#[must_use]
-pub fn negation<T>(_: T) -> Negation<T>
-where
-    T: Neg,
-    Negation<T>: Default,
-{
-    Default::default()
-}
-
-/// Type-level division.
-pub trait Div<T> {
-    /// The result of dividing `Self` by `T`.
-    type Result;
-
-    /// The remainder when dividing `Self` by `T`.
-    type Remainder;
-}
+pub type Negation<T> = <T as Neg>::Output;
 
 mod div_internals {
-    use crate::Add;
-    use crate::Div;
     use crate::Negation;
     use crate::Next;
     use crate::One;
     use crate::Prev;
     use crate::Sum;
     use crate::Zero;
+
+    use core::ops::Add;
+    use core::ops::Div;
+    use core::ops::Rem;
 
     pub trait ToDivHelper<Divisor> {
         type Result;
@@ -518,9 +610,19 @@ mod div_internals {
     pub struct DivHelper<T>(T);
 
     impl<T, U> Div<U> for DivHelper<T> {
-        type Result = Negation<One>;
+        type Output = Negation<One>;
 
-        type Remainder = T;
+        fn div(self, _: U) -> Self::Output {
+            Self::Output::VALUE
+        }
+    }
+
+    impl<T: Default, U> Rem<U> for DivHelper<T> {
+        type Output = T;
+
+        fn rem(self, _: U) -> Self::Output {
+            Self::Output::default()
+        }
     }
 
     pub(crate) type DivHelperOf<T, Divisor> = <T as ToDivHelper<Divisor>>::Result;
@@ -530,15 +632,39 @@ use div_internals::DivHelperOf;
 use div_internals::ToDivHelper;
 
 impl<T> Div<Next<T>> for Zero {
-    type Result = Zero;
+    type Output = Zero;
 
-    type Remainder = Zero;
+    #[inline(always)]
+    fn div(self, _: Next<T>) -> Self::Output {
+        Zero
+    }
+}
+
+impl<T> Rem<Next<T>> for Zero {
+    type Output = Zero;
+
+    #[inline(always)]
+    fn rem(self, _: Next<T>) -> Self::Output {
+        Zero
+    }
 }
 
 impl<T> Div<Prev<T>> for Zero {
-    type Result = Zero;
+    type Output = Zero;
 
-    type Remainder = Zero;
+    #[inline(always)]
+    fn div(self, _: Prev<T>) -> Self::Output {
+        Zero
+    }
+}
+
+impl<T> Rem<Prev<T>> for Zero {
+    type Output = Zero;
+
+    #[inline(always)]
+    fn rem(self, _: Prev<T>) -> Self::Output {
+        Zero
+    }
 }
 
 impl<T, U> Div<Next<U>> for Next<T>
@@ -546,64 +672,129 @@ where
     Next<U>: Positive,
     Next<T>: Sub<Next<U>> + Positive,
     Difference<Next<T>, Next<U>>: ToDivHelper<Next<U>>,
-    DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>: Div<Next<U>>,
+    DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>: Div<Next<U>> + Rem<Next<U>>,
     Quotient<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>: Add<One>,
+    Sum<Quotient<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>, One>: Default,
 {
-    type Result = Sum<Quotient<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>, One>;
+    type Output = Sum<Quotient<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>, One>;
 
-    type Remainder = Remainder<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>;
+    #[inline(always)]
+    fn div(self, _: Next<U>) -> Self::Output {
+        Self::Output::default()
+    }
+}
+
+impl<T, U> Rem<Next<U>> for Next<T>
+where
+    Next<U>: Positive,
+    Next<T>: Sub<Next<U>> + Positive,
+    Difference<Next<T>, Next<U>>: ToDivHelper<Next<U>>,
+    DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>: Div<Next<U>> + Rem<Next<U>>,
+    Quotient<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>: Add<One>,
+    Remainder<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>: Default,
+{
+    type Output = Remainder<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>;
+
+    #[inline(always)]
+    fn rem(self, _: Next<U>) -> Self::Output {
+        Self::Output::default()
+    }
 }
 
 impl<T, U> Div<Prev<U>> for Next<T>
 where
     Prev<U>: Neg + Negative,
-    Next<T>: Div<Negation<Prev<U>>, Remainder = Zero> + Positive,
+    Next<T>: Div<Negation<Prev<U>>> + Rem<Output = Zero> + Positive,
+    Quotient<Next<T>, Negation<Prev<U>>>: Neg,
+    Negation<Quotient<Next<T>, Negation<Prev<U>>>>: Default,
+{
+    type Output = Negation<Quotient<Next<T>, Negation<Prev<U>>>>;
+
+    #[inline(always)]
+    fn div(self, _: Prev<U>) -> Self::Output {
+        Self::Output::default()
+    }
+}
+
+impl<T, U> Rem<Prev<U>> for Next<T>
+where
+    Prev<U>: Neg + Negative,
+    Next<T>: Div<Negation<Prev<U>>> + Rem<Output = Zero> + Positive,
     Quotient<Next<T>, Negation<Prev<U>>>: Neg,
 {
-    type Result = Negation<Quotient<Next<T>, Negation<Prev<U>>>>;
+    type Output = Zero;
 
-    type Remainder = Zero;
+    #[inline(always)]
+    fn rem(self, _: Prev<U>) -> Self::Output {
+        Zero
+    }
 }
 
 impl<T, U> Div<Next<U>> for Prev<T>
 where
     Next<U>: Positive,
     Prev<T>: Neg + Negative,
-    Negation<Prev<T>>: Div<Next<U>, Remainder = Zero>,
+    Negation<Prev<T>>: Div<Next<U>> + Rem<Output = Zero>,
+    Quotient<Negation<Prev<T>>, Next<U>>: Neg,
+    Negation<Quotient<Negation<Prev<T>>, Next<U>>>: Default,
+{
+    type Output = Negation<Quotient<Negation<Prev<T>>, Next<U>>>;
+
+    #[inline(always)]
+    fn div(self, _: Next<U>) -> Self::Output {
+        Self::Output::default()
+    }
+}
+
+impl<T, U> Rem<Next<U>> for Prev<T>
+where
+    Next<U>: Positive,
+    Prev<T>: Neg + Negative,
+    Negation<Prev<T>>: Div<Next<U>> + Rem<Output = Zero>,
     Quotient<Negation<Prev<T>>, Next<U>>: Neg,
 {
-    type Result = Negation<Quotient<Negation<Prev<T>>, Next<U>>>;
+    type Output = Zero;
 
-    type Remainder = Zero;
+    #[inline(always)]
+    fn rem(self, _: Next<U>) -> Self::Output {
+        Zero
+    }
 }
 
 impl<T, U> Div<Prev<U>> for Prev<T>
 where
     Prev<T>: Neg + Negative,
     Prev<U>: Neg + Negative,
-    Negation<Prev<T>>: Div<Negation<Prev<U>>, Remainder = Zero>,
+    Negation<Prev<T>>: Div<Negation<Prev<U>>> + Rem<Output = Zero>,
+    Quotient<Negation<Prev<T>>, Negation<Prev<U>>>: Default,
 {
-    type Result = Quotient<Negation<Prev<T>>, Negation<Prev<U>>>;
+    type Output = Quotient<Negation<Prev<T>>, Negation<Prev<U>>>;
 
-    type Remainder = Zero;
+    #[inline(always)]
+    fn div(self, _: Prev<U>) -> Self::Output {
+        Self::Output::default()
+    }
+}
+
+impl<T, U> Rem<Prev<U>> for Prev<T>
+where
+    Prev<T>: Neg + Negative,
+    Prev<U>: Neg + Negative,
+    Negation<Prev<T>>: Div<Negation<Prev<U>>> + Rem<Output = Zero>,
+{
+    type Output = Zero;
+
+    #[inline(always)]
+    fn rem(self, _: Prev<U>) -> Self::Output {
+        Zero
+    }
 }
 
 /// The quotient of `T` and `U`.
-pub type Quotient<T, U> = <T as Div<U>>::Result;
+pub type Quotient<T, U> = <T as Div<U>>::Output;
 
 /// The remainder when dividing `T` by `U`.
-pub type Remainder<T, U> = <T as Div<U>>::Remainder;
-
-/// A convience method for dividing two types through their values.
-#[inline(always)]
-#[must_use]
-pub fn quotient<T, U, V>(_: T, _: U) -> Quotient<T, U>
-where
-    T: Div<U>,
-    Quotient<T, U>: Default,
-{
-    Default::default()
-}
+pub type Remainder<T, U> = <T as Rem<U>>::Output;
 
 /// Type-level absolute value.
 pub trait Absolute {
