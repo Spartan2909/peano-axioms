@@ -481,56 +481,118 @@ where
 pub trait Div<T> {
     /// The result of dividing `Self` by `T`.
     type Result;
+
+    /// The remainder when dividing `Self` by `T`.
+    type Remainder;
 }
+
+mod div_internals {
+    use crate::Add;
+    use crate::Div;
+    use crate::Negation;
+    use crate::Next;
+    use crate::One;
+    use crate::Prev;
+    use crate::Sum;
+    use crate::Zero;
+
+    pub trait ToDivHelper<Divisor> {
+        type Result;
+    }
+
+    impl<Divisor> ToDivHelper<Divisor> for Zero {
+        type Result = Self;
+    }
+
+    impl<T, Divisor> ToDivHelper<Divisor> for Next<T> {
+        type Result = Self;
+    }
+
+    impl<T, Divisor> ToDivHelper<Divisor> for Prev<T>
+    where
+        Divisor: Add<Self>,
+    {
+        type Result = DivHelper<Sum<Divisor, Self>>;
+    }
+
+    pub struct DivHelper<T>(T);
+
+    impl<T, U> Div<U> for DivHelper<T> {
+        type Result = Negation<One>;
+
+        type Remainder = T;
+    }
+
+    pub(crate) type DivHelperOf<T, Divisor> = <T as ToDivHelper<Divisor>>::Result;
+}
+
+use div_internals::DivHelperOf;
+use div_internals::ToDivHelper;
 
 impl<T> Div<Next<T>> for Zero {
     type Result = Zero;
+
+    type Remainder = Zero;
 }
 
 impl<T> Div<Prev<T>> for Zero {
     type Result = Zero;
+
+    type Remainder = Zero;
 }
 
 impl<T, U> Div<Next<U>> for Next<T>
 where
     Next<U>: Positive,
     Next<T>: Sub<Next<U>> + Positive,
-    Difference<Next<T>, Next<U>>: Div<Next<U>> + NonNegative,
-    Quotient<Difference<Next<T>, Next<U>>, Next<U>>: Add<One>,
+    Difference<Next<T>, Next<U>>: ToDivHelper<Next<U>>,
+    DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>: Div<Next<U>>,
+    Quotient<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>: Add<One>,
 {
-    type Result = Sum<Quotient<Difference<Next<T>, Next<U>>, Next<U>>, One>;
+    type Result = Sum<Quotient<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>, One>;
+
+    type Remainder = Remainder<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>;
 }
 
 impl<T, U> Div<Prev<U>> for Next<T>
 where
     Prev<U>: Neg + Negative,
-    Next<T>: Div<Negation<Prev<U>>> + Positive,
+    Next<T>: Div<Negation<Prev<U>>, Remainder = Zero> + Positive,
     Quotient<Next<T>, Negation<Prev<U>>>: Neg,
 {
     type Result = Negation<Quotient<Next<T>, Negation<Prev<U>>>>;
+
+    type Remainder = Zero;
 }
 
 impl<T, U> Div<Next<U>> for Prev<T>
 where
     Next<U>: Positive,
     Prev<T>: Neg + Negative,
-    Negation<Prev<T>>: Div<Next<U>>,
+    Negation<Prev<T>>: Div<Next<U>, Remainder = Zero>,
     Quotient<Negation<Prev<T>>, Next<U>>: Neg,
 {
     type Result = Negation<Quotient<Negation<Prev<T>>, Next<U>>>;
+
+    type Remainder = Zero;
 }
 
 impl<T, U> Div<Prev<U>> for Prev<T>
 where
     Prev<T>: Neg + Negative,
     Prev<U>: Neg + Negative,
-    Negation<Prev<T>>: Div<Negation<Prev<U>>>,
+    Negation<Prev<T>>: Div<Negation<Prev<U>>, Remainder = Zero>,
 {
     type Result = Quotient<Negation<Prev<T>>, Negation<Prev<U>>>;
+
+    type Remainder = Zero;
 }
 
 /// The quotient of `T` and `U`.
 pub type Quotient<T, U> = <T as Div<U>>::Result;
+
+/// The remainder when dividing `T` by `U`.
+pub type Remainder<T, U> = <T as Div<U>>::Remainder;
 
 /// A convience method for dividing two types through their values.
 #[inline(always)]
@@ -709,6 +771,7 @@ macro_rules! rpn {
     (@ ((-)       $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Difference<$b, $a>) $($stack)*)) };
     (@ ((*)       $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Product<$b, $a>   ) $($stack)*)) };
     (@ ((/)       $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Quotient<$b, $a>  ) $($stack)*)) };
+    (@ ((%)       $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Remainder<$b, $a> ) $($stack)*)) };
 
     // Operands
     (@ (($val:ty) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) ($val                         $($stack)*)) };

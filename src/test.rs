@@ -43,12 +43,17 @@ fn sub() {
 #[test]
 fn div() {
     assert_eq!(reify_i32(Quotient::<Six, Two>::VALUE), 3);
+    assert_eq!(reify_i32(Remainder::<Six, Two>::VALUE), 0);
     assert_eq!(reify_i32(Quotient::<Six, Negation<Two>>::VALUE), -3);
     assert_eq!(reify_i32(Quotient::<Negation<Ten>, Two>::VALUE), -5);
     assert_eq!(
         reify_i32(Quotient::<Negation<Three>, Negation<One>>::VALUE),
         3
     );
+    assert_eq!(reify_i32(Quotient::<Four, Three>::VALUE), 1);
+    assert_eq!(reify_i32(Remainder::<Four, Three>::VALUE), 1);
+    assert_eq!(reify_i32(Quotient::<Next<Ten>, Four>::VALUE), 2);
+    assert_eq!(reify_i32(Remainder::<Next<Ten>, Four>::VALUE), 3);
 }
 
 #[test]
