@@ -4,6 +4,10 @@ fn reify_i32<T: Reify<i32>>(_: T) -> i32 {
     T::REIFIED
 }
 
+fn reify_i32_i32<T: Reify<(i32, i32)>>(_: T) -> (i32, i32) {
+    T::REIFIED
+}
+
 #[test]
 fn neg() {
     assert_eq!(reify_i32(Negation::<Five>::VALUE), -5);
@@ -71,6 +75,13 @@ fn lcm() {
 
     assert_eq!(reify_i32(LeastCommonMultiple::<TwentyOne, Six>::VALUE), 42);
     assert_eq!(reify_i32(LeastCommonMultiple::<Four, Four>::VALUE), 4);
+}
+
+#[test]
+fn fraction() {
+    assert_eq!(reify_i32_i32(Fraction::<Three, Two>::VALUE), (3, 2));
+    assert_eq!(reify_i32_i32(<rpn!(1 2 fract 1 3 fract +)>::VALUE), (5, 6));
+    assert_eq!(reify_i32_i32(<rpn!(2 3 fract 1 3 fract /)>::VALUE), (2, 1));
 }
 
 #[test]
