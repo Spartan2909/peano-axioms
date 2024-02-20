@@ -1,6 +1,8 @@
 use crate::rpn;
 use crate::Abs;
 use crate::Absolute;
+use crate::Exp;
+use crate::Exponent;
 use crate::Gcd;
 use crate::Lcm;
 use crate::LeastCommonMultiple;
@@ -202,6 +204,29 @@ where
     fn div(self, _: Fraction<Num2, Dem2>) -> Self::Output {
         Self::Output::default()
     }
+}
+
+impl<Num, Dem: Positive> Exp<Zero> for Fraction<Num, Dem> {
+    type Result = One;
+}
+
+impl<Num, Dem, T> Exp<Next<T>> for Fraction<Num, Dem>
+where
+    Dem: Positive,
+    Fraction<Num, Dem>: Exp<T>,
+    Exponent<Fraction<Num, Dem>, T>: Mul<Fraction<Num, Dem>>,
+{
+    type Result = Product<Exponent<Fraction<Num, Dem>, T>, Fraction<Num, Dem>>;
+}
+
+impl<Num, Dem, T> Exp<Prev<T>> for Fraction<Num, Dem>
+where
+    Dem: Positive,
+    Prev<T>: Negative + Abs,
+    Fraction<Num, Dem>: Exp<Absolute<Prev<T>>>,
+    Exponent<Fraction<Num, Dem>, Absolute<Prev<T>>>: Inverse,
+{
+    type Result = Reciprocal<Exponent<Fraction<Num, Dem>, Absolute<Prev<T>>>>;
 }
 
 impl<Num, Dem: Positive> Add<Zero> for Fraction<Num, Dem> {

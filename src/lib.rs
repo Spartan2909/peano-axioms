@@ -559,6 +559,71 @@ where
 /// between `T` and `U`, use [`Absolute<Difference<T, U>>`][Absolute].
 pub type Difference<T, U> = <T as Sub<U>>::Output;
 
+/// Type-level exponentiation.
+pub trait Exp<T> {
+    /// `Self` raised to the power of `T`.
+    type Result;
+}
+
+impl Exp<Zero> for Zero {
+    type Result = One;
+}
+
+impl<T> Exp<Zero> for Next<T> {
+    type Result = One;
+}
+
+impl<T> Exp<Next<T>> for Zero {
+    type Result = Zero;
+}
+
+impl<T> Exp<Zero> for Prev<T> {
+    type Result = One;
+}
+
+impl<T> Exp<Prev<T>> for Zero {
+    type Result = Zero;
+}
+
+impl<T, U> Exp<Next<U>> for Next<T>
+where
+    Next<U>: Positive,
+    Next<T>: Exp<U>,
+    Exponent<Next<T>, U>: Mul<Next<T>>,
+{
+    type Result = Product<Exponent<Next<T>, U>, Next<T>>;
+}
+
+impl<T, U> Exp<Prev<U>> for Next<T>
+where
+    Prev<U>: Negative + Abs,
+    Next<T>: Exp<Absolute<Prev<U>>>,
+    Exponent<Next<T>, Absolute<Prev<U>>>: Inverse,
+{
+    type Result = Reciprocal<Exponent<Next<T>, Absolute<Prev<U>>>>;
+}
+
+impl<T, U> Exp<Next<U>> for Prev<T>
+where
+    Next<U>: Positive,
+    Prev<T>: Exp<U>,
+    Exponent<Prev<T>, U>: Mul<Prev<T>>,
+{
+    type Result = Product<Exponent<Prev<T>, U>, Prev<T>>;
+}
+
+impl<T, U> Exp<Prev<U>> for Prev<T>
+where
+    Prev<U>: Negative + Abs,
+    Prev<T>: Exp<Absolute<Prev<U>>>,
+    Exponent<Prev<T>, Absolute<Prev<U>>>: Inverse,
+{
+    type Result = Reciprocal<Exponent<Prev<T>, Absolute<Prev<U>>>>;
+}
+
+/// `T` raised to the power of `U`.
+pub type Exponent<T, U> = <T as Exp<U>>::Result;
+
 impl Neg for Zero {
     type Output = Zero;
 
@@ -812,8 +877,10 @@ macro_rules! rpn {
     (@ ((*            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Product<$b, $a>              ) $($stack)*)) };
     (@ ((/            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Quotient<$b, $a>             ) $($stack)*)) };
     (@ ((%            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Remainder<$b, $a>            ) $($stack)*)) };
-    (@ ((abs          ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Absolute<$a>                 ) $($stack)*)) };
     (@ ((~            ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Negation<$a>                 ) $($stack)*)) };
+    (@ ((^            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Exponent<$b, $a>             ) $($stack)*)) };
+
+    (@ ((abs          ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Absolute<$a>                 ) $($stack)*)) };
     (@ ((gcd          ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::GreatestCommonDivisor<$b, $a>) $($stack)*)) };
     (@ ((lcm          ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::LeastCommonMultiple<$b, $a>  ) $($stack)*)) };
     (@ ((simplify     ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Simplified<$a>               ) $($stack)*)) };
