@@ -66,6 +66,14 @@ fn gcd() {
 }
 
 #[test]
+fn lcm() {
+    type TwentyOne = Sum<Product<Ten, Two>, One>;
+
+    assert_eq!(reify_i32(LeastCommonMultiple::<TwentyOne, Six>::VALUE), 42);
+    assert_eq!(reify_i32(LeastCommonMultiple::<Four, Four>::VALUE), 4);
+}
+
+#[test]
 fn rpn() {
     assert_eq!(reify_i32(<rpn!(3 4 5 + *)>::VALUE), 27);
 }

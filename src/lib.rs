@@ -16,6 +16,7 @@ use core::fmt;
 use core::hash;
 use core::marker::PhantomData;
 use core::ops::Add;
+use core::ops::Div;
 use core::ops::Mul;
 use core::ops::Neg;
 use core::ops::Sub;
@@ -581,6 +582,58 @@ impl<T: Neg> Neg for Prev<T> {
 
 /// The negation of `Self`.
 pub type Negation<T> = <T as Neg>::Output;
+
+/// Type-level least common multiple.
+pub trait Lcm<T> {
+    /// The least common multiple of `Self` and `T`.
+    type Result;
+}
+
+impl Lcm<Zero> for Zero {
+    type Result = Zero;
+}
+
+impl<T> Lcm<Next<T>> for Zero {
+    type Result = Zero;
+}
+
+impl<T> Lcm<Zero> for Next<T> {
+    type Result = Zero;
+}
+
+impl<T> Lcm<Prev<T>> for Zero {
+    type Result = Zero;
+}
+
+impl<T> Lcm<Zero> for Prev<T> {
+    type Result = Zero;
+}
+
+macro_rules! impl_lcm {
+    ($(($name1:ident, $name2:ident)),* $(,)?) => {
+        $(
+            impl<T, U> Lcm<$name2<U>> for $name1<T>
+            where
+                $name1<T>: Abs,
+                $name2<U>: Abs,
+                Absolute<$name1<T>>: Mul<Absolute<$name2<U>>>,
+                Absolute<$name1<T>>: Gcd<Absolute<$name2<U>>>,
+                Product<Absolute<$name1<T>>, Absolute<$name2<U>>>:
+                    Div<GreatestCommonDivisor<Absolute<$name1<T>>, Absolute<$name2<U>>>>,
+            {
+                type Result = Quotient<
+                    Product<Absolute<$name1<T>>, Absolute<$name2<U>>>,
+                    GreatestCommonDivisor<Absolute<$name1<T>>, Absolute<$name2<U>>>,
+                >;
+            }
+        )*
+    };
+}
+
+impl_lcm![(Next, Next), (Next, Prev), (Prev, Next), (Prev, Prev)];
+
+/// The least common multiple of `T` and `U`.
+pub type LeastCommonMultiple<T, U> = <T as Lcm<U>>::Result;
 
 /// Type-level absolute value.
 pub trait Abs {
