@@ -1,3 +1,4 @@
+use crate::rpn;
 use crate::Difference;
 use crate::Negation;
 use crate::Negative;
@@ -13,6 +14,8 @@ use core::ops::Div;
 use core::ops::Neg;
 use core::ops::Rem;
 use core::ops::Sub;
+
+use local_type_alias::local_alias;
 
 pub trait ToDivHelper<Divisor> {
     type Result;
@@ -89,16 +92,19 @@ impl<T> Rem<Prev<T>> for Zero {
     }
 }
 
+#[allow(unused_parens)]
+#[local_alias(macros = true)]
 impl<T, U> Div<Next<U>> for Next<T>
 where
     Next<U>: Positive,
     Next<T>: Sub<Next<U>> + Positive,
     Difference<Next<T>, Next<U>>: ToDivHelper<Next<U>>,
-    DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>: Div<Next<U>> + Rem<Next<U>>,
-    Quotient<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>: Add<One>,
-    Sum<Quotient<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>, One>: Default,
+    alias!(DivHelper = DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>):,
+    DivHelper: Div<Next<U>> + Rem<Next<U>>,
+    Quotient<DivHelper, Next<U>>: Add<One>,
+    Sum<Quotient<DivHelper, Next<U>>, One>: Default,
 {
-    type Output = Sum<Quotient<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>, One>;
+    type Output = rpn!(({{DivHelper}}) (Next<U>) / 1 +);
 
     #[inline(always)]
     fn div(self, _: Next<U>) -> Self::Output {
@@ -106,16 +112,18 @@ where
     }
 }
 
+#[local_alias]
 impl<T, U> Rem<Next<U>> for Next<T>
 where
     Next<U>: Positive,
     Next<T>: Sub<Next<U>> + Positive,
     Difference<Next<T>, Next<U>>: ToDivHelper<Next<U>>,
-    DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>: Div<Next<U>> + Rem<Next<U>>,
-    Quotient<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>: Add<One>,
-    Remainder<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>: Default,
+    alias!(DivHelper = DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>):,
+    DivHelper: Div<Next<U>> + Rem<Next<U>>,
+    Quotient<DivHelper, Next<U>>: Add<One>,
+    Remainder<DivHelper, Next<U>>: Default,
 {
-    type Output = Remainder<DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>, Next<U>>;
+    type Output = Remainder<DivHelper, Next<U>>;
 
     #[inline(always)]
     fn rem(self, _: Next<U>) -> Self::Output {

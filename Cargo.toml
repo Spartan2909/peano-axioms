@@ -3,6 +3,9 @@ name = "peano-axioms"
 version = "0.1.0"
 edition = "2021"
 
+[dependencies]
+local-type-alias = "0.1.2"
+
 [lints.rust]
 missing_docs = "warn"
 unsafe_code = "forbid"

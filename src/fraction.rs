@@ -32,6 +32,8 @@ use core::ops::Neg;
 use core::ops::Rem;
 use core::ops::Sub;
 
+use local_type_alias::local_alias;
+
 pub trait Sign {
     type Result;
 }
@@ -100,6 +102,7 @@ macro_rules! refiy_fraction {
 refiy_fraction![u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize];
 
 #[allow(unused_parens)]
+#[local_alias(macros = true)]
 impl<Num, Dem> Simplify for Fraction<Num, Dem>
 where
     Num: Simplify,
@@ -107,11 +110,12 @@ where
     Simplified<Num>: Abs + Sign,
     Simplified<Dem>: Abs + Sign,
     SignOf<Simplified<Num>>: Mul<SignOf<Simplified<Dem>>>,
+    alias!(SimplifiedGcd = rpn!(Num simplify abs Dem simplify abs gcd)):,
     Absolute<Simplified<Num>>:
-        Gcd<Absolute<Simplified<Dem>>> + Div<rpn!(Num simplify abs Dem simplify abs gcd)>,
-    Absolute<Simplified<Dem>>: Div<rpn!(Num simplify abs Dem simplify abs gcd)>,
-    rpn!(Dem simplify abs Num simplify abs Dem simplify abs gcd /): Positive,
-    rpn!(Num simplify abs Num simplify abs Dem simplify abs gcd /):
+        Gcd<Absolute<Simplified<Dem>>> + Div<SimplifiedGcd>,
+    Absolute<Simplified<Dem>>: Div<SimplifiedGcd>,
+    rpn!(Dem simplify abs ({{SimplifiedGcd}}) /): Positive,
+    rpn!(Num simplify abs ({{SimplifiedGcd}}) /):
         Mul<rpn!(Num simplify [1 SignOf] Dem simplify [1 SignOf] *)>,
 {
     type Result = rpn!(
