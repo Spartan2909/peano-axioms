@@ -852,54 +852,60 @@ where
 {
 }
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! rpn_impl {
+   // Numerals
+   (((0            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Zero                         ) $($stack)*)) };
+   (((1            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::One                          ) $($stack)*)) };
+   (((2            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Two                          ) $($stack)*)) };
+   (((3            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Three                        ) $($stack)*)) };
+   (((4            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Four                         ) $($stack)*)) };
+   (((5            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Five                         ) $($stack)*)) };
+   (((6            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Six                          ) $($stack)*)) };
+   (((7            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Seven                        ) $($stack)*)) };
+   (((8            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Eight                        ) $($stack)*)) };
+   (((9            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Nine                         ) $($stack)*)) };
+   (((10           ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Ten                          ) $($stack)*)) };
+
+   // Standard operators
+   (((+            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Sum<$b, $a>                  ) $($stack)*)) };
+   (((-            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Difference<$b, $a>           ) $($stack)*)) };
+   (((*            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Product<$b, $a>              ) $($stack)*)) };
+   (((/            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Quotient<$b, $a>             ) $($stack)*)) };
+   (((%            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Remainder<$b, $a>            ) $($stack)*)) };
+   (((~            ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Negation<$a>                 ) $($stack)*)) };
+   (((^            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Exponent<$b, $a>             ) $($stack)*)) };
+
+   (((abs          ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Absolute<$a>                 ) $($stack)*)) };
+   (((gcd          ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::GreatestCommonDivisor<$b, $a>) $($stack)*)) };
+   (((lcm          ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::LeastCommonMultiple<$b, $a>  ) $($stack)*)) };
+   (((simplify     ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Simplified<$a>               ) $($stack)*)) };
+   (((fract        ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Fraction<$b, $a>             ) $($stack)*)) };
+   (((inv          ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::Reciprocal<$a>               ) $($stack)*)) };
+   (((int          ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($crate::ToInt<$a>                    ) $($stack)*)) };
+   (((dup          ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($a               ) ($a               ) $($stack)*)) };
+
+   // Custom operators
+   ((([1 $op:ident]) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($op<$a>                              ) $($stack)*)) };
+   ((([2 $op:ident]) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) (($op<$b, $a>                          ) $($stack)*)) };
+
+   // Operands
+   ((($val:ty      ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn_impl!(($($rest)*) ($val                                    $($stack)*)) };
+
+   // Done
+   ((                             ) ($val:tt                 )) => { $val };
+}
+
 /// Reverse polish notation representation for type-level numerical expressions.
 ///
 /// Numbers from 0-10 inclusive can be represented with numerals, but others
 /// must be represented with parenthesised types (e.g. `(Next<Next<Ten>>)`).
 #[macro_export]
 macro_rules! rpn {
-    // Numerals
-    (@ ((0            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Zero                         ) $($stack)*)) };
-    (@ ((1            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::One                          ) $($stack)*)) };
-    (@ ((2            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Two                          ) $($stack)*)) };
-    (@ ((3            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Three                        ) $($stack)*)) };
-    (@ ((4            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Four                         ) $($stack)*)) };
-    (@ ((5            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Five                         ) $($stack)*)) };
-    (@ ((6            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Six                          ) $($stack)*)) };
-    (@ ((7            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Seven                        ) $($stack)*)) };
-    (@ ((8            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Eight                        ) $($stack)*)) };
-    (@ ((9            ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Nine                         ) $($stack)*)) };
-    (@ ((10           ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Ten                          ) $($stack)*)) };
-
-    // Standard operators
-    (@ ((+            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Sum<$b, $a>                  ) $($stack)*)) };
-    (@ ((-            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Difference<$b, $a>           ) $($stack)*)) };
-    (@ ((*            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Product<$b, $a>              ) $($stack)*)) };
-    (@ ((/            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Quotient<$b, $a>             ) $($stack)*)) };
-    (@ ((%            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Remainder<$b, $a>            ) $($stack)*)) };
-    (@ ((~            ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Negation<$a>                 ) $($stack)*)) };
-    (@ ((^            ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Exponent<$b, $a>             ) $($stack)*)) };
-
-    (@ ((abs          ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Absolute<$a>                 ) $($stack)*)) };
-    (@ ((gcd          ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::GreatestCommonDivisor<$b, $a>) $($stack)*)) };
-    (@ ((lcm          ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::LeastCommonMultiple<$b, $a>  ) $($stack)*)) };
-    (@ ((simplify     ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Simplified<$a>               ) $($stack)*)) };
-    (@ ((fract        ) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Fraction<$b, $a>             ) $($stack)*)) };
-    (@ ((inv          ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::Reciprocal<$a>               ) $($stack)*)) };
-    (@ ((int          ) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($crate::ToInt<$a>                    ) $($stack)*)) };
-
-    // Custom operators
-    (@ (([1 $op:ident]) $($rest:tt)*) ($a:tt       $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($op<$a>                              ) $($stack)*)) };
-    (@ (([2 $op:ident]) $($rest:tt)*) ($a:tt $b:tt $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) (($op<$b, $a>                          ) $($stack)*)) };
-
-    // Operands
-    (@ (($val:ty      ) $($rest:tt)*) (            $($stack:tt)*)) => { $crate::rpn!(@ ($($rest)*) ($val                                    $($stack)*)) };
-
-    // Done
-    (@ (                             ) ($val:tt                  )) => { $val };
 
     // Entry point
-    ($($t:tt)+                                                    ) => { $crate::rpn!(@ ($(($t))+ ) (                                                  )) };
+    ($($t:tt)+) => { $crate::rpn_impl!(($(($t))+) ()) };
 }
 
 #[cfg(test)]
