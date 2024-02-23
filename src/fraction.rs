@@ -118,10 +118,10 @@ where
         Mul<rpn!(Num simplify [1 SignOf] Dem simplify [1 SignOf] *)>,
 {
     type Result = rpn!(
-                Num simplify abs Num simplify abs Dem simplify abs gcd /
+                Num simplify abs ({{SimplifiedGcd}}) /
                 Num simplify [1 SignOf] Dem simplify [1 SignOf] *
             *
-            Dem simplify abs Num simplify abs Dem simplify abs gcd /
+            Dem simplify abs ({{SimplifiedGcd}}) /
         fract
     );
 }

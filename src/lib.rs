@@ -903,7 +903,6 @@ macro_rules! rpn_impl {
 /// must be represented with parenthesised types (e.g. `(Next<Next<Ten>>)`).
 #[macro_export]
 macro_rules! rpn {
-
     // Entry point
     ($($t:tt)+) => { $crate::rpn_impl!(($(($t))+) ()) };
 }
