@@ -102,7 +102,7 @@ macro_rules! refiy_fraction {
 refiy_fraction![u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize];
 
 #[allow(unused_parens)]
-#[local_alias(macros = true)]
+#[local_alias(macros)]
 impl<Num, Dem> Simplify for Fraction<Num, Dem>
 where
     Num: Simplify,
@@ -111,8 +111,7 @@ where
     Simplified<Dem>: Abs + Sign,
     SignOf<Simplified<Num>>: Mul<SignOf<Simplified<Dem>>>,
     alias!(SimplifiedGcd = rpn!(Num simplify abs Dem simplify abs gcd)):,
-    Absolute<Simplified<Num>>:
-        Gcd<Absolute<Simplified<Dem>>> + Div<SimplifiedGcd>,
+    Absolute<Simplified<Num>>: Gcd<Absolute<Simplified<Dem>>> + Div<SimplifiedGcd>,
     Absolute<Simplified<Dem>>: Div<SimplifiedGcd>,
     rpn!(Dem simplify abs ({{SimplifiedGcd}}) /): Positive,
     rpn!(Num simplify abs ({{SimplifiedGcd}}) /):

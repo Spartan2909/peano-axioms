@@ -93,7 +93,7 @@ impl<T> Rem<Prev<T>> for Zero {
 }
 
 #[allow(unused_parens)]
-#[local_alias(macros = true)]
+#[local_alias(macros)]
 impl<T, U> Div<Next<U>> for Next<T>
 where
     Next<U>: Positive,
