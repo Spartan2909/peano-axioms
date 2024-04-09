@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-local-type-alias = "0.1.3"
+local-type-alias = "0.1.4"
 
 [lints.rust]
 missing_docs = "warn"
