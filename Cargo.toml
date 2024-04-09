@@ -5,6 +5,9 @@ edition = "2021"
 license = "MIT"
 documentation = "docs.rs/peano-axioms"
 repository = "https://github.com/Spartan2909/peano-axioms"
+description = "Type-level numbers based on an extension of the Peano axioms."
+keywords = ["number", "type"]
+categories = ["no-std", "no-std::no-alloc"]
 
 [dependencies]
 local-type-alias = "0.1.4"
