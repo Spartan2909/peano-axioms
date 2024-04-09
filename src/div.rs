@@ -94,12 +94,12 @@ impl<T> Rem<Prev<T>> for Zero {
 
 #[allow(unused_parens)]
 #[local_alias(macros)]
+#[alias(type DivHelper = DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>)]
 impl<T, U> Div<Next<U>> for Next<T>
 where
     Next<U>: Positive,
     Next<T>: Sub<Next<U>> + Positive,
     Difference<Next<T>, Next<U>>: ToDivHelper<Next<U>>,
-    alias!(DivHelper = DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>):,
     DivHelper: Div<Next<U>> + Rem<Next<U>>,
     Quotient<DivHelper, Next<U>>: Add<One>,
     Sum<Quotient<DivHelper, Next<U>>, One>: Default,
@@ -113,12 +113,12 @@ where
 }
 
 #[local_alias]
+#[alias(type DivHelper = DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>)]
 impl<T, U> Rem<Next<U>> for Next<T>
 where
     Next<U>: Positive,
     Next<T>: Sub<Next<U>> + Positive,
     Difference<Next<T>, Next<U>>: ToDivHelper<Next<U>>,
-    alias!(DivHelper = DivHelperOf<Difference<Next<T>, Next<U>>, Next<U>>):,
     DivHelper: Div<Next<U>> + Rem<Next<U>>,
     Quotient<DivHelper, Next<U>>: Add<One>,
     Remainder<DivHelper, Next<U>>: Default,
