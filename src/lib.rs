@@ -901,6 +901,16 @@ macro_rules! rpn_impl {
 ///
 /// Numbers from 0-10 inclusive can be represented with numerals, but others
 /// must be represented with parenthesised types (e.g. `(Next<Next<Ten>>)`).
+///
+/// The available operators are `+`, `-`, `*`, `/`, `%`, `~`, `^`, `abs` (absolute value),
+/// `gcd` (greatest common divisor), `lcm` (least common multiple), `simplify`,
+/// `fract` (precise division with fractions), `inv` (reciprocal),
+/// `int` (precise fraction-integer conversion), `dup` (duplicates the operand).
+///
+/// `[n Ty]` will use `Ty` as an operator by giving it `n` type parameters formed from the top `n`
+/// operands on the stack. The operand at the top of the stack will be the last type parameter, and
+/// will continue down the stack until `n` operands have been consumed. Currently only `n=1` and
+/// `n=2` are supported.
 #[macro_export]
 macro_rules! rpn {
     // Entry point
