@@ -32,7 +32,7 @@ pub trait Reify<T> {
     /// The runtime representation of this type.
     const REIFIED: T;
 
-    /// A convience method for getting the runtime representation of this type.
+    /// A convenience method for getting the runtime representation of this type.
     ///
     /// The default implementation should always be sufficient.
     #[inline(always)]
